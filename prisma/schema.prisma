@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Défini dans le fichier .env
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+
+  // Relations
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+  orders   Order[]
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relation avec l'auteur
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  // Relations
+  comments   Comment[]
+  likes      Like[]
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  tags       PostTag[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  // Relation avec l'article
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+
+  // Relation avec l'auteur
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId String
+
+  // Likes sur les commentaires
+  likes Like[]
+}
+
+model Like {
+  id String @id @default(uuid())
+
+  // Relation avec l'utilisateur
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  // Relation avec un post OU un commentaire
+  post      Post?    @relation(fields: [postId], references: [id])
+  postId    String?
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  commentId String?
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  posts Post[]
+}
+
+model Tag {
+  id    String    @id @default(uuid())
+  name  String    @unique
+  posts PostTag[]
+}
+
+// Table pivot pour relation Many-to-Many entre Post et Tag
+model PostTag {
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String
+  tag    Tag    @relation(fields: [tagId], references: [id])
+  tagId  String
+
+  @@id([postId, tagId]) // Empêche les doublons
+}
+
+// Système e-commerce
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  total     Float
+  createdAt DateTime @default(now())
+}
