@@ -3,6 +3,8 @@ import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
 
+
+
 async function main() {
     console.log("Seeding database...");
 
